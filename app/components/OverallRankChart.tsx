@@ -9,6 +9,14 @@ import {
 import ChipAwareTooltip from "./ChartTooltip";
 import { palette } from "./colors";
 
+const formatYAxis = (v: number) => {
+  if (!Number.isFinite(v)) return "–";
+  if (v >= 500_000) {
+    return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  }
+  return new Intl.NumberFormat("en-GB").format(v);
+};
+
 export default function OverallRankChart({
   rankData,
   seriesKeys,
@@ -72,7 +80,7 @@ export default function OverallRankChart({
           <YAxis
             tickMargin={6}
             reversed                           // lower rank numbers appear higher (better)
-            tickFormatter={(v) => new Intl.NumberFormat("en-GB").format(Number(v))}
+            tickFormatter={formatYAxis}
             width={90}
           />
 
