@@ -140,8 +140,9 @@ export default async function Page() {
     seriesByUser[name] = arr.map(({ event, total_points }) => ({ event, total_points }));
   });
 
-
-  
+  const codesByUser: Record<string, string> = Object.fromEntries(
+  Users.map(u => [u.name, u.code])
+);
 
   return (
     <main className="min-h-screen bg-gray-800 text-gray-100 p-6">
@@ -167,6 +168,7 @@ export default async function Page() {
           rankData={rankData}
           seriesKeys={seriesKeys}
           seriesByUser={seriesByUser}
+          codesByUser={codesByUser}
           chipsByUser={chipsByUser}
           chipsMetaByUser={chipsMetaByUser}
         />

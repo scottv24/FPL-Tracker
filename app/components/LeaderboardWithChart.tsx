@@ -15,6 +15,7 @@ export default function LeaderboardWithChart({
   cumulativeData,
   rankData,
   seriesKeys,
+  codesByUser,
   seriesByUser,
   chipsByUser,
   chipsMetaByUser,
@@ -22,6 +23,7 @@ export default function LeaderboardWithChart({
   cumulativeData: Array<Record<string, number>>;
   rankData: Array<Record<string, number>>;
   seriesKeys: string[];
+  codesByUser: Record<string, string>;
   seriesByUser: SeriesByUser;
   chipsByUser: Record<string, number[]>;
   chipsMetaByUser: Record<string, Record<number, string[]>>;
@@ -122,6 +124,7 @@ export default function LeaderboardWithChart({
                     key={name}
                     className="border-t border-gray-800"
                     style={{ backgroundColor: bg }}
+                    onClick={() => window.open(`https://fantasy.premierleague.com/entry/${codesByUser[name]}/event/${selectedWeek}`, '_blank')}
                   >
                     <td className="py-2 pr-3">{rank}</td>
                     <td className="py-2 pr-3">
