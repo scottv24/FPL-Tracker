@@ -104,10 +104,12 @@ export default function VsAverageChart({
           onClick={handle}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="event" tickMargin={8} height={40} />
+      
+          <XAxis dataKey="event" tickMargin={8} height={40} label={{ value: "Gameweek", position: "insideBottom", offset: -2 }}/>      
           <YAxis
             tickMargin={6}
             tickFormatter={formatZeroAsAverage}
+            label={{ value: "% Diff", angle: -90, position: "insideLeft", offset: 10}}
           />
 
           <Tooltip
@@ -134,7 +136,10 @@ export default function VsAverageChart({
               stroke={palette[idx % palette.length]}
               strokeWidth={2}
               dot={false}
-              isAnimationActive={false}
+              isAnimationActive={true}   
+              animationBegin={0}  
+              animationDuration={600}  
+              animationEasing="ease-in-out"
               connectNulls
               activeDot={{ r: 4 }}
             />

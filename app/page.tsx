@@ -14,13 +14,13 @@ export default async function Page() {
   const initialGeneratedAt = new Date().toISOString();
 
   return (
-    <main className="min-h-screen bg-gray-800 text-gray-100 p-6">
+    <main className="min-h-screen bg-gray-800 text-gray-100 py-6 sm:px-4 px-2">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex items-end justify-between gap-4">
+        <header className="flex items-end justify-between gap-4 px-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Speak of the Neville Tracker</h1>
             <p className="text-sm text-gray-300">
-              Click a point in the chart to view gameweek leaderboard.
+              
             </p>
           </div>
         </header>

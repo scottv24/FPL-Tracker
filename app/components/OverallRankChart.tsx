@@ -76,12 +76,8 @@ export default function OverallRankChart({
           onClick={handle}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="event" tickMargin={8} height={40} />
-          <YAxis
-            tickMargin={6}
-            reversed                           // lower rank numbers appear higher (better)
-            tickFormatter={formatYAxis}
-          />
+          <XAxis dataKey="event" tickMargin={8} height={40} label={{ value: "Gameweek", position: "insideBottom", offset: -2 }}/>
+          <YAxis tickMargin={6} tickFormatter={formatYAxis} label={{ value: "Rank", angle: -90, position: "insideLeft", offset: 10}} />
 
           <Tooltip
             content={
@@ -106,7 +102,10 @@ export default function OverallRankChart({
               stroke={palette[idx % palette.length]}
               strokeWidth={2}
               dot={false}
-              isAnimationActive={false}
+              isAnimationActive={true}   
+              animationBegin={0}  
+              animationDuration={600}  
+              animationEasing="ease-in-out"
               connectNulls
               activeDot={{ r: 4 }}
             />

@@ -82,8 +82,8 @@ export default function LeaderboardWithChart({
   return (
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
       {/* Left: Leaderboard */}
-      <div className="md:col-span-2 rounded-2xl bg-gray-900 text-gray-100 p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="md:col-span-2 rounded-2xl bg-gray-900 text-gray-100 py-4">
+        <div className="flex items-center justify-between mb-3 px-4">
           <h3 className="text-lg font-semibold">Leaderboard</h3>
           <div className="flex items-center gap-2">
             <button
@@ -108,11 +108,11 @@ export default function LeaderboardWithChart({
           <table className="w-full text-sm">
             <thead className="text-left text-gray-400">
               <tr>
-                <th className="py-2 pr-3">#</th>
+                <th className="py-2 pl-4">#</th>
                 <th className="py-2 pr-3">Name</th>
                 <th className="py-2 pr-3 text-right">Points</th>
                 <th className="py-2 pr-3 text-right">Diff</th>
-                <th className="py-2 pr-3 text-right">Δ GW</th>
+                <th className="py-2 pr-4 text-right">Δ GW</th>
               </tr>
             </thead>
             <tbody>
@@ -126,7 +126,7 @@ export default function LeaderboardWithChart({
                     style={{ backgroundColor: bg }}
                     onClick={() => window.open(`https://fantasy.premierleague.com/entry/${codesByUser[name]}/event/${selectedWeek}`, '_blank')}
                   >
-                    <td className="py-2 pr-3">{rank}</td>
+                    <td className="py-4 pl-2">{rank}</td>
                     <td className="py-2 pr-3">
                       <span
                         className="inline-block h-2 w-2 rounded-full mr-2 align-middle"
@@ -141,7 +141,7 @@ export default function LeaderboardWithChart({
                     <td className="py-2 pr-3 text-right tabular-nums">
                       {behind === undefined ? "—" : behind}
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pr-4 text-right tabular-nums">
                       {delta === undefined ? "—" : (delta >= 0 ? `+${delta}` : `${delta}`)}
                     </td>
                   </tr>
@@ -161,7 +161,7 @@ export default function LeaderboardWithChart({
         <div className="mb-3 flex gap-2">
           <TabButton id="cumulative" label="Total Points" />
           <TabButton id="diff" label="Diff vs Leader" />
-          <TabButton id="avg" label="Vs Average" />
+          <TabButton id="avg" label="Total Average % Diff" />
           <TabButton id="rank" label="World Rank" />
         </div>
 

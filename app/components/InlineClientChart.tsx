@@ -68,8 +68,9 @@ export default function InlineClientChart({
           onClick={handleMove}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="event" tickMargin={8} height={40} />
-          <YAxis tickMargin={6} label={{ value: "Total Points", angle: -90, position: "insideLeft" }} />
+          <XAxis dataKey="event" tickMargin={8} height={40} label={{ value: "Gameweek", position: "insideBottom", offset: -2 }}/>
+          <YAxis tickMargin={6} label={{ value: "Total Points", angle: -90, position: "insideLeft", offset: 10}} />
+          
 
           <Tooltip
             content={
@@ -98,7 +99,10 @@ export default function InlineClientChart({
               stroke={palette[idx % palette.length]}
               strokeWidth={2}
               dot={false}
-              isAnimationActive={false}
+              isAnimationActive={true}   
+              animationBegin={0}  
+              animationDuration={600}  
+              animationEasing="ease-in-out"
               connectNulls
               activeDot={{ r: 4 }}
             />
