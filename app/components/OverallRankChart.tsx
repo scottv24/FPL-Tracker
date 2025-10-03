@@ -77,7 +77,7 @@ export default function OverallRankChart({
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="event" tickMargin={8} height={40} label={{ value: "Gameweek", position: "insideBottom", offset: -2 }}/>
-          <YAxis tickMargin={6} tickFormatter={formatYAxis} label={{ value: "Rank", angle: -90, position: "insideLeft", offset: 10}} />
+          <YAxis tickMargin={6} reversed tickFormatter={formatYAxis} label={{ value: "Rank", angle: -90, position: "insideLeft", offset: 10}} />
 
           <Tooltip
             content={
