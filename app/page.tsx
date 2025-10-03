@@ -42,7 +42,6 @@ async function fetchWithRetry<T>(
     try {
       // noStore + no-store => never cached/prerendered at build
       const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return (await res.json()) as T;
     } catch (err) {
       lastErr = err;
@@ -141,12 +140,15 @@ export default async function Page() {
     seriesByUser[name] = arr.map(({ event, total_points }) => ({ event, total_points }));
   });
 
+
+  
+
   return (
     <main className="min-h-screen bg-gray-800 text-gray-100 p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">FPL Multi-Entry Progress</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Speak of the Neville Tracker</h1>
             <p className="text-sm text-gray-300">
               Toggle between Cumulative / Diff vs Leader / Vs Average / Overall Rank. Hover or click the chart to sync the leaderboard.
             </p>
@@ -154,13 +156,12 @@ export default async function Page() {
         </header>
 
         {/* Soft warning if any entries failed to load */}
-        {failures.length > 0 && (
-          <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 text-yellow-200 px-3 py-2 text-sm">
-            Couldn’t load data for: <span className="font-medium">{failures.join(", ")}</span>. This can happen if the FPL API
-            returned a temporary 503. We’ll render with whatever loaded; try refreshing later.
-          </div>
-        )}
-
+        
+        {failures.length > 0 ? (
+                  <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 text-yellow-200 px-3 py-2 text-md">
+                    The FPL website is being updated so stats are not available. Try again later.
+                  </div>
+        ) :
         <LeaderboardWithChart
           cumulativeData={cumulativeData}
           rankData={rankData}
@@ -169,6 +170,7 @@ export default async function Page() {
           chipsByUser={chipsByUser}
           chipsMetaByUser={chipsMetaByUser}
         />
+      }
       </div>
     </main>
   );
