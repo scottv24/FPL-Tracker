@@ -26,7 +26,8 @@ export interface FplHistoryResponse {
 
 export interface FplPayload {
   cumulativeData: Array<Record<string, number>>;
-  rankData: Array<Record<string, number>>;
+  overallRankData: Array<Record<string, number>>;
+  leagueRankData: Array<Record<string, number>>;
   seriesKeys: string[];
   seriesByUser: Record<string, { event: number; total_points: number }[]>;
   chipsByUser: Record<string, number[]>;
@@ -67,7 +68,7 @@ function mergeByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<s
   });
 }
 
-function mergeRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<string, number>> {
+function mergeOverallRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<string, number>> {
   const allEvents = new Set<number>();
   Object.values(seriesMap).forEach(arr => arr.forEach(e => allEvents.add(e.event)));
   const sorted = [...allEvents].sort((a, b) => a - b);
@@ -77,6 +78,48 @@ function mergeRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Reco
       const hit = arr.find(e => e.event === gw);
       row[name] = hit ? hit.overall_rank : NaN;
     }
+    return row;
+  });
+}
+
+function mergeLeagueRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<string, number>> {
+  const allEvents = new Set<number>();
+  Object.values(seriesMap).forEach(arr => arr.forEach(e => allEvents.add(e.event)));
+  const sortedEvents = [...allEvents].sort((a, b) => a - b);
+
+  const names = Object.keys(seriesMap);
+
+  return sortedEvents.map(eventId => {
+    const entries = names.map(name => {
+      const ev = seriesMap[name]?.find(e => e.event === eventId);
+      return { name, points: ev?.total_points };
+    });
+
+    const withData = entries.filter(e => Number.isFinite(e.points)) as Array<{
+      name: string; points: number;
+    }>;
+
+
+    withData.sort((a, b) => b.points - a.points);
+
+
+    const placement = new Map<string, number>();
+    let lastPoints: number | null = null;
+    let lastPlace = 0;
+
+    withData.forEach((e, idx) => {
+      if (lastPoints === null || e.points !== lastPoints) {
+        lastPlace = idx + 1;        
+        lastPoints = e.points;
+      }
+      placement.set(e.name, lastPlace);
+    });
+
+
+    const row: Record<string, number> = { event: eventId } as any;
+    names.forEach(name => {
+      row[name] = placement.has(name) ? (placement.get(name) as number) : NaN;
+    });
     return row;
   });
 }
@@ -118,7 +161,8 @@ export async function buildFplPayload(): Promise<FplPayload> {
   }
 
   const cumulativeData = mergeByEvent(seriesMap);
-  const rankData = mergeRankByEvent(seriesMap);
+  const overallRankData = mergeOverallRankByEvent(seriesMap);
+  const leagueRankData = mergeLeagueRankByEvent(seriesMap);
   const seriesKeys = Object.keys(seriesMap);
 
   const seriesByUser: Record<string, { event: number; total_points: number }[]> = {};
@@ -130,7 +174,8 @@ export async function buildFplPayload(): Promise<FplPayload> {
 
   return {
     cumulativeData,
-    rankData,
+    leagueRankData,
+    overallRankData,
     seriesKeys,
     seriesByUser,
     chipsByUser,

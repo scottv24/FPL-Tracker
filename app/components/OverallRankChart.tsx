@@ -24,7 +24,7 @@ export default function OverallRankChart({
   chipsByUser,
   chipsMetaByUser,
 }: {
-  rankData: Array<Record<string, number>>;      // rows: { event, Scott: rank, Ross: rank, ... }
+  rankData: Array<Record<string, number>>;      
   seriesKeys: string[];
   onWeekChange?: (gw: number) => void;
   chipsByUser?: Record<string, number[]>;
@@ -91,7 +91,6 @@ export default function OverallRankChart({
 
           <Legend verticalAlign="bottom" iconType="circle" align="center" wrapperStyle={{ paddingTop: 8 }} />
 
-          {/* Chip markers */}
           {chipDots}
 
           {seriesKeys.map((name, idx) => (

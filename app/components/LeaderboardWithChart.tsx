@@ -13,7 +13,8 @@ type SeriesByUser = Record<string, SeriesPoint[]>;
 
 export default function LeaderboardWithChart({
   cumulativeData,
-  rankData,
+  leagueRankData,
+  overallRankData,
   seriesKeys,
   codesByUser,
   seriesByUser,
@@ -21,7 +22,8 @@ export default function LeaderboardWithChart({
   chipsMetaByUser,
 }: {
   cumulativeData: Array<Record<string, number>>;
-  rankData: Array<Record<string, number>>;
+  leagueRankData: Array<Record<string, number>>;
+  overallRankData: Array<Record<string, number>>;
   seriesKeys: string[];
   codesByUser: Record<string, string>;
   seriesByUser: SeriesByUser;
@@ -31,7 +33,7 @@ export default function LeaderboardWithChart({
   const allEvents = cumulativeData.map((d) => d.event as number);
   const maxEvent = allEvents.length ? Math.max(...allEvents) : 1;
   const [selectedWeek, setSelectedWeek] = React.useState<number>(maxEvent);
-  const [tab, setTab] = React.useState<"cumulative" | "diff" | "avg" | "rank">("cumulative");
+  const [tab, setTab] = React.useState<"cumulative" | "diff" | "avg" | "ovr rank" | "lg rank">("cumulative");
 
   const getPointsAt = (name: string, gw: number) => {
     const arr = seriesByUser[name] || [];
@@ -66,7 +68,7 @@ export default function LeaderboardWithChart({
     return rows.map((r, i) => ({ rank: i + 1, ...r }));
   }, [seriesKeys, selectedWeek, seriesByUser]);
 
-  const TabButton = ({ id, label }: { id: "cumulative" | "diff" | "avg" | "rank"; label: string }) => {
+  const TabButton = ({ id, label }: { id: "cumulative" | "diff" | "avg" | "ovr rank" | "lg rank"; label: string }) => {
     const active = tab === id;
     return (
       <button
@@ -158,11 +160,12 @@ export default function LeaderboardWithChart({
 
       {/* Right: Tabs + Chart */}
       <div className="md:col-span-4 rounded-2xl bg-gray-900 p-4">
-        <div className="mb-3 flex gap-2">
+        <div className="mb-3 grid grid-cols-3 md:grid-cols-6">
           <TabButton id="cumulative" label="Total Points" />
           <TabButton id="diff" label="Diff vs Leader" />
           <TabButton id="avg" label="Total Average % Diff" />
-          <TabButton id="rank" label="World Rank" />
+          <TabButton id="ovr rank" label="World Rank" />
+          <TabButton id="lg rank" label="League Rank" />
         </div>
 
         {tab === "cumulative" && (
@@ -196,9 +199,19 @@ export default function LeaderboardWithChart({
           />
         )}
 
-        {tab === "rank" && (
+        {tab === "ovr rank" && (
           <OverallRankChart
-            rankData={rankData}
+            rankData={overallRankData}
+            seriesKeys={seriesKeys}
+            onWeekChange={setSelectedWeek}
+            chipsByUser={chipsByUser}
+            chipsMetaByUser={chipsMetaByUser}
+          />
+        )}
+
+        {tab === "lg rank" && (
+          <OverallRankChart
+            rankData={leagueRankData}
             seriesKeys={seriesKeys}
             onWeekChange={setSelectedWeek}
             chipsByUser={chipsByUser}

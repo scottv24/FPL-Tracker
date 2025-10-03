@@ -80,7 +80,8 @@ export default function LiveFpl({
 
       <LeaderboardWithChart
         cumulativeData={data.cumulativeData}
-        rankData={data.rankData}
+        leagueRankData={data.leagueRankData}
+        overallRankData={data.overallRankData}
         seriesKeys={data.seriesKeys}
         seriesByUser={data.seriesByUser}
         chipsByUser={data.chipsByUser}
