@@ -71,7 +71,7 @@ export default function OverallRankChart({
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={rankData}
-          margin={{ top: 10, right: 24, left: 8, bottom: 10 }}
+          margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
           onMouseMove={handle}
           onClick={handle}
         >
