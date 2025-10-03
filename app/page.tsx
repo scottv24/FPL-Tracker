@@ -20,7 +20,7 @@ export default async function Page() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Speak of the Neville Tracker</h1>
             <p className="text-sm text-gray-300">
-              Live—updates every minute without page refresh. Click a point in the chart to view gameweek leaderboard.
+              Click a point in the chart to view gameweek leaderboard.
             </p>
           </div>
         </header>
