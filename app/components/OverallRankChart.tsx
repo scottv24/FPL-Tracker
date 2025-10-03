@@ -81,7 +81,6 @@ export default function OverallRankChart({
             tickMargin={6}
             reversed                           // lower rank numbers appear higher (better)
             tickFormatter={formatYAxis}
-            width={90}
           />
 
           <Tooltip
