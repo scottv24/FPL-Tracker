@@ -150,7 +150,7 @@ export default async function Page() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Speak of the Neville Tracker</h1>
             <p className="text-sm text-gray-300">
-              Toggle between Cumulative / Diff vs Leader / Vs Average / Overall Rank. Hover or click the chart to sync the leaderboard.
+              Hover or click the chart to sync the leaderboard.
             </p>
           </div>
         </header>
