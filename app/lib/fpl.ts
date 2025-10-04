@@ -36,23 +36,93 @@ export interface FplPayload {
   failures: string[];
 }
 
+
+class HttpError extends Error {
+  status: number;
+  url: string;
+  headers: Record<string, string>;
+  bodyPreview: string; // truncated
+  constructor(params: {
+    message: string;
+    status: number;
+    url: string;
+    headers: Headers;
+    body: string;
+  }) {
+    super(params.message);
+    this.name = 'HttpError';
+    this.status = params.status;
+    this.url = params.url;
+    this.headers = Object.fromEntries(params.headers.entries());
+    // avoid spewing megabytes into logs
+    this.bodyPreview = params.body.slice(0, 2_000);
+  }
+}
+
 // -------------------- fetch helper --------------------
 
 export async function fetchWithRetry<T>(
   url: string,
-  { retries = 2, backoffMs = 600 }: { retries?: number; backoffMs?: number } = {}
+  {
+    retries = 2,
+    backoffMs = 600,
+    // optional: pass extra fetch init (headers, etc.)
+    init,
+  }: { retries?: number; backoffMs?: number; init?: RequestInit } = {}
 ): Promise<T> {
   let lastErr: unknown;
+
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      const res = await fetch(url, {
+        cache: "no-store",
+        // Some endpoints (incl. FPL) are picky; a UA/Accept/Referer helps.
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; fpl-stats-app/1.0; +https://example.com)",
+          "Accept": "application/json",
+          "Referer": "https://fantasy.premierleague.com/",
+          ...(init?.headers ?? {}),
+        },
+        ...init,
+      });
+
+      if (!res.ok) {
+        let body = "";
+        try { body = await res.text(); } catch { /* ignore */ }
+
+        throw new HttpError({
+          message: `HTTP ${res.status} ${res.statusText} for ${url}`,
+          status: res.status,
+          url,
+          headers: res.headers,
+          body,
+        });
+      }
+
+      // Only parse JSON after we know it's OK
       return (await res.json()) as T;
-    } catch (err) {
+    } catch (err: any) {
       lastErr = err;
-      if (i < retries) await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, i)));
+      // richer server log
+      console.error("Fetch failed", {
+        url,
+        tryIndex: i,
+        name: err?.name,
+        message: String(err?.message ?? err),
+        status: err?.status,
+        headers: err?.headers,
+        bodyPreview: err?.bodyPreview,
+      });
+
+      if (i < retries) {
+        const sleep = backoffMs * Math.pow(2, i);
+        await new Promise(r => setTimeout(r, sleep));
+        continue;
+      }
     }
   }
+
   throw lastErr;
 }
 

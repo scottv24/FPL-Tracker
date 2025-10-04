@@ -74,7 +74,7 @@ export default function LiveFpl({
     <>
       {data.failures.length > 0 && (
         <div className="mb-3 rounded-md border border-yellow-500/40 bg-yellow-500/10 text-yellow-200 px-3 py-2 text-sm">
-          Couldn’t load data for: <span className="font-medium">{data.failures.join(", ")}</span>. Rendering with partial data.
+          Couldn’t connect to FPL website as it is updating. Try again later.
         </div>
       )}
 
