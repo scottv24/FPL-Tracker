@@ -14,10 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  manifest: "/manifest.webmanifest",
-  themeColor: "#111827",
   icons: {
-    icon: [{ url: "/favicon.ico" }], // keep if you want a classic favicon
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
   }
 };
