@@ -1,6 +1,15 @@
 // app/lib/fpl.ts
 export type User = { name: string; code: string };
 
+export type PlayerRow = {
+  name: string;            // "Scott"
+  points: number;          // 402
+  diffVsLeader: number;    // 0, 66, ...
+  deltaGw: number;         // +44, +32, ...
+  bestGw?: boolean;      
+  rank: number;
+};
+
 export const Users: User[] = [
   { name: "Scott",   code: "2408847" },
   { name: "Ross",    code: "7707025" },

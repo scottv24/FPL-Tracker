@@ -3,14 +3,16 @@ import React from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import LiveFpl from "./components/LiveFpl";
 import { buildFplPayloadCached } from "./lib/fpl-cached";
+import Leaderboard from "./components/Leaderboard";
+import { PlayerRow } from "./lib/fpl";
 
 export const dynamic = "force-dynamic";
+
 
 export default async function Page() {
   // You can drop noStore if you rely on the cached builder’s revalidate window
   noStore();
   const data = await buildFplPayloadCached();
-
   const initialGeneratedAt = new Date().toISOString();
 
   return (

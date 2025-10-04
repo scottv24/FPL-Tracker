@@ -3,6 +3,7 @@
 import React from "react";
 import LeaderboardWithChart from "./LeaderboardWithChart";
 import type { FplPayload } from "@/app/lib/fpl";
+import Leaderboard from "./Leaderboard";
 
 function formatTimeLondon(iso: string | Date) {
   const d = typeof iso === "string" ? new Date(iso) : iso;
