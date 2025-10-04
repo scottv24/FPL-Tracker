@@ -1,31 +1,24 @@
 // app/components/LiveFpl.tsx
 "use client";
-
 import React from "react";
 import LeaderboardWithChart from "./LeaderboardWithChart";
 import type { FplPayload } from "@/app/lib/fpl";
 
 function formatTimeLondon(iso: string | Date) {
   const d = typeof iso === "string" ? new Date(iso) : iso;
-  // Deterministic across server & client:
   return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZone: "Europe/London",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Europe/London",
   }).format(d);
 }
 
 export default function LiveFpl({
   initial,
-  initialGeneratedAt, // 👈 SSR snapshot
+  initialGeneratedAt,
 }: {
   initial: FplPayload;
   initialGeneratedAt: string;
 }) {
   const [data, setData] = React.useState<FplPayload>(initial);
-  // 👇 initialise from the server snapshot to avoid mismatch
   const [lastUpdated, setLastUpdated] = React.useState<Date>(new Date(initialGeneratedAt));
 
   React.useEffect(() => {
@@ -39,29 +32,31 @@ export default function LiveFpl({
         const json = (await res.json()) as FplPayload;
         if (!cancelled) {
           setData(json);
-          setLastUpdated(new Date()); // updates AFTER hydration
+          setLastUpdated(new Date());
         }
       } catch {
-        // ignore; try again next time
+        // ignore; we'll try again
       } finally {
         if (!cancelled) {
-          timer = setTimeout(tick, 60_000); // 1 minute
+          // regular cadence after the first hit
+          timer = setTimeout(tick, 60_000);
         }
       }
     }
 
-    // Pause/resume polling on tab visibility
     const onVis = () => {
-      if (document.hidden) clearTimeout(timer);
-      else {
+      if (document.hidden) {
         clearTimeout(timer);
-        tick();
+      } else {
+        // resume soon after returning to the tab
+        clearTimeout(timer);
+        timer = setTimeout(tick, 4_000 + Math.random() * 2_000);
       }
     };
     document.addEventListener("visibilitychange", onVis);
 
-    // start
-    tick();
+    // 🔑 Initial delay to avoid an immediate duplicate right after SSR
+    timer = setTimeout(tick, 15_000 + Math.random() * 5_000);
 
     return () => {
       cancelled = true;
@@ -72,12 +67,6 @@ export default function LiveFpl({
 
   return (
     <>
-      {data.failures.length > 0 && (
-        <div className="mb-3 rounded-md border border-yellow-500/40 bg-yellow-500/10 text-yellow-200 px-3 py-2 text-sm">
-          Couldn’t connect to FPL website as it is updating. Try again later.
-        </div>
-      )}
-
       <LeaderboardWithChart
         cumulativeData={data.cumulativeData}
         leagueRankData={data.leagueRankData}
@@ -88,8 +77,6 @@ export default function LiveFpl({
         chipsMetaByUser={data.chipsMetaByUser}
         codesByUser={data.codesByUser}
       />
-
-      {/* 👇 deterministic formatting + suppress hydration warning */}
       <p className="mt-2 text-xs text-gray-400" suppressHydrationWarning>
         Last updated: {formatTimeLondon(lastUpdated)}
       </p>
