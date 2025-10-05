@@ -9,6 +9,7 @@ import OverallRankChart from "./OverallRankChart";
 import { colorForSeries, hsla } from "./colors";
 import { PlayerRow } from "../lib/fpl";
 import Leaderboard from "./Leaderboard";
+import StatsCard from "./StatsCard";
 
 type SeriesPoint = { event: number; total_points: number };
 type SeriesByUser = Record<string, SeriesPoint[]>;
@@ -179,6 +180,7 @@ export default function LeaderboardWithChart({
           />
         )}
       </div>
+      <StatsCard />
     </div>
   );
 }

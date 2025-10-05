@@ -15,7 +15,7 @@ export default function Leaderboard({ players, gameweek }: {
       className="rounded-3xl bg-slate-900/60 md:p-2 space-y-1"
       aria-labelledby="leaderboard-title"
     >
-      <div className="space-y-3">
+      <div className="md:space-y-2 space-y-1">
         {sorted.map((p, i) => (
           <LeaderboardCard
             key={p.name}
