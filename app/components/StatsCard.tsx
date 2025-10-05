@@ -45,7 +45,7 @@ function Panel({ title, children }: React.PropsWithChildren<{ title: string }>) 
 
 function ThreeRows({ rows, unit }: { rows: StatItem[]; unit: "pts" | "%" }) {
   return (
-    <>
+    <div className="flex flex-col gap-2">
       {rows.map((r, i) => (
         <div
           key={`${r.code}-${r.event}-${i}`}
@@ -65,7 +65,7 @@ function ThreeRows({ rows, unit }: { rows: StatItem[]; unit: "pts" | "%" }) {
           />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
