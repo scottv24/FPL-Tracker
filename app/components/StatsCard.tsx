@@ -15,7 +15,7 @@ export default function StatsCard({
 }) {
   const safe = (rows: StatItem[]) => rows?.slice(0, 3) ?? [];
   return (
-    <div className="md:col-span-6 rounded-2xl bg-gray-900 text-gray-100 p-4">
+    <div className="md:col-span-6 rounded-2xl bg-gray-900 text-gray-100 p-4 shadow-xl/20">
       <h2 id="leaderboard-title" className="text-slate-100 text-xl font-semibold">
         League Records
       </h2>

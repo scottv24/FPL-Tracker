@@ -85,7 +85,7 @@ export default function LeaderboardWithChart({
     return (
       <button
         onClick={() => setTab(id)}
-        className={`px-3 py-1 rounded-md text-sm transition
+        className={`px-3 py-2 rounded-md text-sm transition font-semibold
           ${active ? "bg-gray-800 text-white" : "text-gray-300 hover:text-white hover:bg-gray-800/60"}`}
       >
         {label}
@@ -95,7 +95,7 @@ export default function LeaderboardWithChart({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-      <div className="md:col-span-2 rounded-2xl bg-gray-900 text-gray-100 py-4">
+      <div className="md:col-span-2 rounded-2xl bg-gray-900 text-gray-100 py-4 shadow-xl/20">
         <div className="flex items-center justify-between mb-3 px-4">
           <h2 id="leaderboard-title" className="text-slate-100 text-xl font-semibold">
             Leaderboard
@@ -130,8 +130,8 @@ export default function LeaderboardWithChart({
       </div>
 
       {/* Right: Tabs + Chart */}
-      <div className="md:col-span-4 rounded-2xl bg-gray-900 p-4">
-        <div className="mb-3 grid grid-cols-3 md:grid-cols-6">
+      <div className="md:col-span-4 rounded-2xl bg-gray-900 p-0 shadow-xl/20">
+        <div className="p-1 grid grid-cols-3 md:grid-cols-6 ">
           <TabButton id="cumulative" label="Total Points" />
           <TabButton id="diff" label="Diff vs Leader" />
           <TabButton id="avg" label="Total Average % Diff" />
