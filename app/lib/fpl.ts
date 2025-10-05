@@ -222,6 +222,7 @@ type PicksResponse = {
   picks: Array<{
     element: number;
     position: number;
+    multiplier: number;
     is_captain: boolean;
     is_vice_captain: boolean;
     element_type: number;
@@ -244,7 +245,7 @@ function sumLivePointsForPicks(live: EventLiveResponse, picks: PicksResponse["pi
   let total = 0;
   for (const p of picks) {
     const pts = m.get(p.element) ?? 0;
-    const mult = p.is_captain ? 2 : 1;
+    const mult = p.multiplier;
     total += pts * mult;
   }
   return total;
@@ -276,7 +277,6 @@ async function applyLiveOverrideIfAny(seriesMap: Record<string, CurrentEvent[]>)
         `https://fantasy.premierleague.com/api/entry/${u.code}/event/${latestEvent}/picks/`,
         { headers: browserLikeHeaders }
       );
-
       const livePoints = sumLivePointsForPicks(live as EventLiveResponse, picks.picks);
       const prevTotal = arr.find(e => e.event === latestEvent - 1)?.total_points ?? 0;
 
