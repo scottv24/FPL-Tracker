@@ -9,7 +9,7 @@ import OverallRankChart from "./OverallRankChart";
 import { colorForSeries, hsla } from "./colors";
 import { PlayerRow } from "../lib/fpl";
 import Leaderboard from "./Leaderboard";
-import StatsCard from "./StatsCard";
+import StatsCard, { StatItem } from "./StatsCard";
 
 type SeriesPoint = { event: number; total_points: number };
 type SeriesByUser = Record<string, SeriesPoint[]>;
@@ -23,6 +23,10 @@ export default function LeaderboardWithChart({
   seriesByUser,
   chipsByUser,
   chipsMetaByUser,
+  // stats arrays
+  bestWeeksTop3,
+  worstWeeksBottom3,
+  topBenchTop3,
 }: {
   cumulativeData: Array<Record<string, number>>;
   leagueRankData: Array<Record<string, number>>;
@@ -32,6 +36,9 @@ export default function LeaderboardWithChart({
   seriesByUser: SeriesByUser;
   chipsByUser: Record<string, number[]>;
   chipsMetaByUser: Record<string, Record<number, string[]>>;
+  bestWeeksTop3: StatItem[];
+  worstWeeksBottom3: StatItem[];
+  topBenchTop3: StatItem[];
 }) {
   const allEvents = cumulativeData.map((d) => d.event as number);
   const maxEvent = allEvents.length ? Math.max(...allEvents) : 1;
@@ -52,13 +59,14 @@ export default function LeaderboardWithChart({
     }
 
     const rows = seriesKeys.map((name) => {
+      const code = codesByUser[name]; 
       const ptsNow = getPointsAt(name, selectedWeek);
       const ptsPrev = getPointsAt(name, selectedWeek - 1);
       const deltaGw = (ptsNow ?? 0) - (!Number.isNaN(ptsPrev) ? ptsPrev : 0);
 
       const diffVsLeader = (leaderPoints ?? 0) - (ptsNow ?? 0);
-
-      return { name, points: ptsNow, diffVsLeader, deltaGw };
+    
+      return { name, code, points: ptsNow, diffVsLeader, deltaGw };
     });
 
     rows.sort((a, b) =>
@@ -180,7 +188,7 @@ export default function LeaderboardWithChart({
           />
         )}
       </div>
-      <StatsCard />
+      <StatsCard bestWeeks={bestWeeksTop3} worstWeeks={worstWeeksBottom3} topBench={topBenchTop3} />
     </div>
   );
 }

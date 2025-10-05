@@ -6,6 +6,7 @@ export type CurrentEvent = {
   rank: number;
   overall_rank: number | null;   
   value: number;
+  points_on_bench?: number;
 };
 
 export type Chip = { name: string; time: string; event: number };

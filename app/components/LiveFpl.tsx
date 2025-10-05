@@ -3,7 +3,6 @@
 import React from "react";
 import LeaderboardWithChart from "./LeaderboardWithChart";
 import type { FplPayload } from "@/app/lib/fpl";
-import Leaderboard from "./Leaderboard";
 
 function formatTimeLondon(iso: string | Date) {
   const d = typeof iso === "string" ? new Date(iso) : iso;
@@ -36,33 +35,20 @@ export default function LiveFpl({
           setLastUpdated(new Date());
         }
       } catch {
-        // ignore; we'll try again
+        // ignore transient errors
       } finally {
         if (!cancelled) {
-          // regular cadence after the first hit
-          timer = setTimeout(tick, 60_000);
+          timer = setTimeout(tick, 15000 + Math.random() * 5000);
         }
       }
     }
 
-    const onVis = () => {
-      if (document.hidden) {
-        clearTimeout(timer);
-      } else {
-        // resume soon after returning to the tab
-        clearTimeout(timer);
-        timer = setTimeout(tick, 4_000 + Math.random() * 2_000);
-      }
-    };
-    document.addEventListener("visibilitychange", onVis);
-
-    // 🔑 Initial delay to avoid an immediate duplicate right after SSR
-    timer = setTimeout(tick, 15_000 + Math.random() * 5_000);
+    // soft start to avoid SSR+CSR duplicate burst
+    timer = setTimeout(tick, 15000 + Math.random() * 5000);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
@@ -77,6 +63,9 @@ export default function LiveFpl({
         chipsByUser={data.chipsByUser}
         chipsMetaByUser={data.chipsMetaByUser}
         codesByUser={data.codesByUser}
+        bestWeeksTop3={data.bestWeeksTop3}
+        worstWeeksBottom3={data.worstWeeksBottom3}
+        topBenchTop3={data.topBenchTop3}
       />
       <p className="mt-2 text-xs text-gray-400" suppressHydrationWarning>
         Last updated: {formatTimeLondon(lastUpdated)}

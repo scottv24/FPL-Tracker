@@ -6,8 +6,10 @@ export type PlayerRow = {
   points: number;          // 402
   diffVsLeader: number;    // 0, 66, ...
   deltaGw: number;         // +44, +32, ...
-  bestGw?: boolean;      
+  bestGw?: boolean;
   rank: number;
+  code?: string;
+  event?: number;
 };
 
 export const Users: User[] = [
@@ -17,16 +19,17 @@ export const Users: User[] = [
   { name: "Jake",    code: "541241"  },
 ];
 
+// -------------------- types for API history + payload --------------------
+
 export type CurrentEvent = {
   event: number;
-  points: number;
-  total_points: number;
+  points: number;             // GW points (denominator for bench %)
+  total_points: number;       // cumulative after this GW
   rank: number;
   overall_rank: number;
   value: number;
-};
-
-
+  points_on_bench?: number;   // provided by FPL history API
+}
 
 export type Chip = { name: string; time: string; event: number };
 
@@ -45,6 +48,10 @@ export interface FplPayload {
   chipsMetaByUser: Record<string, Record<number, string[]>>;
   codesByUser: Record<string, string>;
   failures: string[];
+  // Stats (now include code)
+  bestWeeksTop3: { name: string; code: string; event: number; value: number }[];
+  worstWeeksBottom3: { name: string; code: string; event: number; value: number }[];
+  topBenchTop3: { name: string; code: string; event: number; value: number }[]; // value is PERCENT
 }
 
 // -------------------- shared fetch bits --------------------
@@ -76,25 +83,17 @@ class HttpError extends Error {
     this.status = params.status;
     this.url = params.url;
     this.headers = Object.fromEntries(params.headers.entries());
-    this.bodyPreview = params.body.slice(0, 2_000);
+    this.bodyPreview = params.body.slice(0, 300);
   }
 }
 
-export async function fetchWithRetry<T>(
-  url: string,
-  {
-    retries = 2,
-    backoffMs = 600,
-    init,
-  }: { retries?: number; backoffMs?: number; init?: RequestInit } = {}
-): Promise<T> {
-  let lastErr: unknown;
-  for (let i = 0; i <= retries; i++) {
+async function fetchDedup<T>(url: string, init?: RequestInit): Promise<T> {
+  let lastErr: unknown = null;
+  for (let i = 0; i < 2; i++) {
     try {
       const res = await fetch(url, {
-        // Allow Next.js to memoize when we want (we'll pass next: { revalidate } per call)
-        headers: { ...browserLikeHeaders, ...(init?.headers ?? {}) },
         ...init,
+        headers: { ...browserLikeHeaders, ...(init?.headers ?? {}) },
       });
       if (!res.ok) {
         let body = "";
@@ -108,45 +107,24 @@ export async function fetchWithRetry<T>(
         });
       }
       return (await res.json()) as T;
-    } catch (err: any) {
+    } catch (err) {
       lastErr = err;
-      console.error("Fetch failed", {
-        url,
-        tryIndex: i,
-        name: err?.name,
-        message: String(err?.message ?? err),
-        status: err?.status,
-        headers: err?.headers,
-        bodyPreview: err?.bodyPreview,
-      });
-      if (i < retries) {
-        const jitter = Math.random() * 250;
-        await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, i) + jitter));
-        continue;
-      }
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
     }
   }
   throw lastErr;
 }
 
-// Deduplicate identical in-flight requests across the same render/request
-const inflight = new Map<string, Promise<any>>();
-async function fetchDedup<T>(url: string, init?: RequestInit): Promise<T> {
-  const key = `${url}|${JSON.stringify(init ?? {})}`;
-  if (inflight.has(key)) return inflight.get(key)! as Promise<T>;
-  const p = fetchWithRetry<T>(url, { init }).finally(() => inflight.delete(key));
-  inflight.set(key, p);
-  return p;
-}
-
-// Tiny concurrency limiter
-async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
-  const res: R[] = [];
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
   const q = items.slice();
+  const res: R[] = [];
   const workers = Array.from({ length: Math.min(limit, items.length) }).map(async () => {
     while (q.length) {
       const item = q.shift()!;
-      // jitter to smooth bursts
       await new Promise(r => setTimeout(r, 200 + Math.random() * 400));
       res.push(await fn(item));
     }
@@ -155,7 +133,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R
   return res;
 }
 
-// -------------------- merge helpers (unchanged) --------------------
+// -------------------- merge helpers --------------------
 
 function mergeByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<string, number>> {
   const allEvents = new Set<number>();
@@ -165,7 +143,7 @@ function mergeByEvent(seriesMap: Record<string, CurrentEvent[]>): Array<Record<s
     const row: Record<string, number> = { event: gw } as any;
     for (const [name, arr] of Object.entries(seriesMap)) {
       const hit = arr.find(e => e.event === gw);
-      row[name] = hit ? hit.total_points : NaN;
+      row[name] = hit ? hit.total_points : Number.NaN;
     }
     return row;
   });
@@ -179,7 +157,7 @@ function mergeOverallRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Arr
     const row: Record<string, number> = { event: gw } as any;
     for (const [name, arr] of Object.entries(seriesMap)) {
       const hit = arr.find(e => e.event === gw);
-      row[name] = hit ? hit.overall_rank : NaN;
+      row[name] = hit ? hit.overall_rank : Number.NaN;
     }
     return row;
   });
@@ -204,42 +182,50 @@ function mergeLeagueRankByEvent(seriesMap: Record<string, CurrentEvent[]>): Arra
     let lastPoints: number | null = null;
     let lastPlace = 0;
 
-    withData.forEach((e, idx) => {
-      if (lastPoints === null || e.points !== lastPoints) {
-        lastPlace = idx + 1;
-        lastPoints = e.points;
+    withData.forEach((row, i) => {
+      if (lastPoints === null || row.points !== lastPoints) {
+        lastPlace = i + 1;
+        lastPoints = row.points;
       }
-      placement.set(e.name, lastPlace);
+      placement.set(row.name, lastPlace);
     });
 
     const row: Record<string, number> = { event: eventId } as any;
     names.forEach(name => {
-      row[name] = placement.has(name) ? (placement.get(name) as number) : NaN;
+      row[name] = placement.get(name) ?? Number.NaN;
     });
     return row;
   });
 }
 
-// -------------------- live GW logic --------------------
+// -------------------- live points override --------------------
 
-type EventLiveElement = {
-  id: number;
-  stats: { total_points: number; minutes?: number };
+type EventLiveResponse = {
+  elements: Array<{
+    id: number;
+    stats: { minutes: number; total_points: number };
+  }>;
 };
 
-type EventLiveResponse = { elements: EventLiveElement[] };
-
 type PicksResponse = {
-  entry_history: { event: number };
+  active_chip: string | null;
+  automatic_subs: Array<any>;
+  entry_history: {
+    event: number;
+    points: number;
+    total_points: number;
+    rank: number;
+    overall_rank: number;
+    bank: number;
+    value: number;
+  };
   picks: Array<{
     element: number;
-    multiplier: number;
     position: number;
     is_captain: boolean;
     is_vice_captain: boolean;
     element_type: number;
   }>;
-  active_chip?: string | null;
 };
 
 function looksLive(live: EventLiveResponse | null | undefined): boolean {
@@ -254,45 +240,34 @@ function buildPointsMap(live: EventLiveResponse): Map<number, number> {
 }
 
 function sumLivePointsForPicks(live: EventLiveResponse, picks: PicksResponse["picks"]): number {
-  const map = buildPointsMap(live);
-  let sum = 0;
+  const m = buildPointsMap(live);
+  let total = 0;
   for (const p of picks) {
-    const viaMap = map.get(p.element);
-    const viaIndex = live.elements[p.element - 1]?.stats?.total_points;
-    const pts = (viaMap ?? viaIndex ?? 0) * (p.multiplier ?? 1);
-    sum += pts;
+    const pts = m.get(p.element) ?? 0;
+    const mult = p.is_captain ? 2 : 1;
+    total += pts * mult;
   }
-  return sum;
+  return total;
 }
 
-/** Mutates seriesMap to override the latest GW with live values.
- *  Uses dedup + concurrency limit to avoid bursts.
- */
-async function applyLiveOverrideIfAny(seriesMap: Record<string, CurrentEvent[]>): Promise<void> {
-  const names = Object.keys(seriesMap);
-  if (names.length === 0) return;
-
+async function applyLiveOverrideIfAny(seriesMap: Record<string, CurrentEvent[]>) {
   const latestEvent = Math.max(
-    ...names.map(n => {
-      const arr = seriesMap[n] ?? [];
-      return arr.length ? Math.max(...arr.map(e => e.event)) : 0;
-    })
+    ...Object.values(seriesMap).flat().map((e) => e.event),
+    0
   );
   if (!Number.isFinite(latestEvent) || latestEvent <= 0) return;
 
   let live: EventLiveResponse | null = null;
   try {
-    // live endpoint: don't disable caching entirely, just no-store for safety
-    live = await fetchWithRetry<EventLiveResponse>(
+    live = await fetchDedup<EventLiveResponse>(
       `https://fantasy.premierleague.com/api/event/${latestEvent}/live/`,
-      { init: { cache: "no-store", headers: browserLikeHeaders } }
+      { headers: browserLikeHeaders }
     );
   } catch {
     return;
   }
   if (!looksLive(live)) return;
 
-  // Limit picks calls to 2 at a time
   await mapLimit(Users, 2, async (u) => {
     const arr = seriesMap[u.name];
     if (!arr) return;
@@ -301,6 +276,7 @@ async function applyLiveOverrideIfAny(seriesMap: Record<string, CurrentEvent[]>)
         `https://fantasy.premierleague.com/api/entry/${u.code}/event/${latestEvent}/picks/`,
         { headers: browserLikeHeaders }
       );
+
       const livePoints = sumLivePointsForPicks(live as EventLiveResponse, picks.picks);
       const prevTotal = arr.find(e => e.event === latestEvent - 1)?.total_points ?? 0;
 
@@ -317,25 +293,44 @@ async function applyLiveOverrideIfAny(seriesMap: Record<string, CurrentEvent[]>)
           overall_rank: Number.NaN as number,
           value: Number.NaN as number,
         });
-        arr.sort((a, b) => a.event - b.event);
       }
     } catch {
-      // ignore
+      // swallow live override errors per-user
     }
   });
+}
+
+// -------------------- fixtures query for "worst leaderboard" rule --------------------
+
+type Fixture = { finished: boolean };
+
+/**
+ * Returns true if the latest event has any fixture not finished.
+ * If fetching fails for any reason, returns false (i.e., do not exclude).
+ */
+async function latestEventHasUnfinishedFixture(latestEvent: number): Promise<boolean> {
+  if (!Number.isFinite(latestEvent) || latestEvent <= 0) return false;
+  try {
+    const fixtures = await fetchDedup<Fixture[]>(
+      `https://fantasy.premierleague.com/api/fixtures/?event=${latestEvent}`,
+      { headers: browserLikeHeaders }
+    );
+    return Array.isArray(fixtures) && fixtures.some(f => f && (f.finished === false));
+  } catch {
+    // On error, fail open (do not exclude).
+    return false;
+  }
 }
 
 // -------------------- main builder --------------------
 
 export async function buildFplPayload(): Promise<FplPayload> {
-  // Histories: cacheable + dedup + limited concurrency
+  // Histories
   const results = await mapLimit(Users, 2, async (user) => {
     const url = `https://fantasy.premierleague.com/api/entry/${user.code}/history/`;
     try {
       const json = await fetchDedup<FplHistoryResponse>(url, {
-        // give Next a memoization window (revalidate) via route/page callers
         headers: browserLikeHeaders,
-        // DO NOT set { cache: "no-store" } here — let Next cache/memoize upstream
       });
       return { user, json, ok: true as const };
     } catch (err) {
@@ -344,6 +339,7 @@ export async function buildFplPayload(): Promise<FplPayload> {
     }
   });
 
+  const codeByName: Record<string, string> = Object.fromEntries(Users.map(u => [u.name, u.code]));
   const seriesMap: Record<string, CurrentEvent[]> = {};
   const chipsByUser: Record<string, number[]> = {};
   const chipsMetaByUser: Record<string, Record<number, string[]>> = {};
@@ -358,27 +354,64 @@ export async function buildFplPayload(): Promise<FplPayload> {
       chipsByUser[user.name] = chips.map(c => c.event);
 
       const meta: Record<number, string[]> = {};
-      for (const c of chips) {
-        if (!meta[c.event]) meta[c.event] = [];
-        meta[c.event].push(c.name);
-      }
+      for (const c of chips) (meta[c.event] ||= []).push(c.name);
       chipsMetaByUser[user.name] = meta;
     } else {
       failures.push(r.user.name);
     }
   }
 
-  // Apply live override (mutates seriesMap)
+  // Live override (mutates seriesMap).
   try {
     await applyLiveOverrideIfAny(seriesMap);
   } catch (e) {
     console.warn("Live override failed:", e);
   }
 
-  const cumulativeData   = mergeByEvent(seriesMap);
-  const overallRankData  = mergeOverallRankByEvent(seriesMap);
-  const leagueRankData   = mergeLeagueRankByEvent(seriesMap);
-  const seriesKeys       = Object.keys(seriesMap);
+  // ----- league records (best/worst weeks and top bench %), now include code -----
+  const allWeeks: { name: string; code: string; event: number; value: number }[] = [];
+  const allBenchPct: { name: string; code: string; event: number; value: number }[] = [];
+
+  for (const [name, events] of Object.entries(seriesMap)) {
+    const code = codeByName[name];
+    for (const e of events) {
+      // for best/worst based on GW points
+      if (Number.isFinite(e.points)) {
+        allWeeks.push({ name, code, event: e.event, value: e.points });
+      }
+      // for bench percentage
+      const bench = e.points_on_bench;
+      if (Number.isFinite(bench) && Number.isFinite(e.points) && (e.points as number) > 0) {
+        // value = (bench / GW points) * 100, rounded to 1 decimal
+        const pct = Math.round((bench as number) / (e.points as number) * 1000) / 10;
+        allBenchPct.push({ name, code, event: e.event, value: pct });
+      }
+    }
+  }
+
+  // Determine latest event across the league
+  const latestEvent = Math.max(0, ...Object.values(seriesMap).flat().map(e => e.event));
+
+  // Should we exclude the latest event from the WORST leaderboard?
+  const excludeLatestFromWorst = await latestEventHasUnfinishedFixture(latestEvent);
+
+  // best: unaffected
+  const bestWeeksTop3 = [...allWeeks].sort((a, b) => b.value - a.value).slice(0, 3);
+
+  // worst: exclude latest event iff any fixture for that event is unfinished
+  const worstCandidatePool = excludeLatestFromWorst
+    ? allWeeks.filter(w => w.event !== latestEvent)
+    : allWeeks;
+  const worstWeeksBottom3 = [...worstCandidatePool].sort((a, b) => a.value - b.value).slice(0, 3);
+
+  // bench %: rank by percentage desc
+  const topBenchTop3 = [...allBenchPct].sort((a, b) => b.value - a.value).slice(0, 3);
+
+  // ----- build chart series -----
+  const cumulativeData  = mergeByEvent(seriesMap);
+  const overallRankData = mergeOverallRankByEvent(seriesMap);
+  const leagueRankData  = mergeLeagueRankByEvent(seriesMap);
+  const seriesKeys      = Object.keys(seriesMap);
 
   const seriesByUser: Record<string, { event: number; total_points: number }[]> = {};
   Object.entries(seriesMap).forEach(([name, arr]) => {
@@ -397,5 +430,8 @@ export async function buildFplPayload(): Promise<FplPayload> {
     chipsMetaByUser,
     codesByUser,
     failures,
+    bestWeeksTop3,
+    worstWeeksBottom3,
+    topBenchTop3, // percentage values
   };
 }

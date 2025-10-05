@@ -28,6 +28,8 @@ export default function Leaderboard({ players, gameweek }: {
                 sorted.filter(v => v.deltaGw > p.deltaGw).length == 0 && 
                 sorted.filter(v => v.deltaGw == p.deltaGw).length != sorted.length
             }
+            event={gameweek}
+            code={p.code}
           />
         ))}
       </div>
