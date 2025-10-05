@@ -137,7 +137,7 @@ export default function LeaderboardWithChart({
           <TabButton id="avg" label="Total Average % Diff" />
           <TabButton id="ovr rank" label="World Rank" />
           <TabButton id="lg rank" label="League Rank" />
-          <TabButton id="wins" label="Most Wins" />
+          <TabButton id="wins" label="Most GW Wins" />
         </div>
 
         {tab === "cumulative" && (
