@@ -68,7 +68,7 @@ export default function OverallRankChart({
     Number.isFinite(v) ? new Intl.NumberFormat("en-GB").format(Number(v)) : "–";
 
   return (
-    <div className="w-full h-[420px] rounded-b-xl bg-white/[.03] ring-1 ring-white/10 p-1">
+    <div className="w-full h-[420px] rounded-b-xl bg-white/[.02] ring-1 ring-white/10 p-1">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={rankData}

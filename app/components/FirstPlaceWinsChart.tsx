@@ -103,7 +103,7 @@ export default function FirstPlaceWinsChart({
   );
 
   return (
-    <div className="w-full h-[420px] rounded-b-xl bg-white/[.03] ring-1 ring-white/10 p-1">
+    <div className="w-full h-[420px] rounded-b-xl bg-white/[.02] ring-1 ring-white/10 p-1">
       <div className="w-full h-[420px]">
         <ResponsiveContainer>
           <BarChart data={sorted} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
