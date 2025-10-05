@@ -1,3 +1,5 @@
+import { colorFor } from "../lib/theme";
+
 export const palette = [
   "hsl(210, 100%, 55%)", // blue
   "hsl(145, 80%, 55%)",  // green
@@ -7,8 +9,7 @@ export const palette = [
 
 
 export function colorForSeries(name: string, seriesKeys: string[]) {
-  const idx = Math.max(0, seriesKeys.indexOf(name));
-  return palette[idx % palette.length];
+  return colorFor(name.toLowerCase()).hex;
 }
 
 

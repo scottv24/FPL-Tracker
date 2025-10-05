@@ -41,7 +41,7 @@ export default function OverallRankChart({
     const dots: React.ReactNode[] = [];
     for (let i = 0; i < seriesKeys.length; i++) {
       const name = seriesKeys[i];
-      const color = palette[i % palette.length];
+      const color = colorFor(name.toLowerCase()).hex;
       const chipEvents = chipsByUser?.[name] ?? [];
       for (const ev of chipEvents) {
         const row = rankData.find((r) => r.event === ev);
