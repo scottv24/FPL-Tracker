@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import ChipAwareTooltip from "./ChartTooltip";
 import { palette } from "./colors";
+import { colorFor } from "../lib/theme";
 
 const formatYAxis = (v: number) => {
   if (!Number.isFinite(v)) return "–";
@@ -98,7 +99,7 @@ export default function OverallRankChart({
               key={name}
               type="monotone"
               dataKey={name}
-              stroke={palette[idx % palette.length]}
+              stroke={colorFor(name.toLowerCase()).hex}
               strokeWidth={2}
               dot={false}
               isAnimationActive={true}   

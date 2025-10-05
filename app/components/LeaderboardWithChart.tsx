@@ -10,6 +10,8 @@ import { colorForSeries, hsla } from "./colors";
 import { PlayerRow } from "../lib/fpl";
 import Leaderboard from "./Leaderboard";
 import StatsCard, { StatItem } from "./StatsCard";
+import FirstPlaceWinsChart from "./FirstPlaceWinsChart";
+import { colorFor } from "../lib/theme";
 
 type SeriesPoint = { event: number; total_points: number };
 type SeriesByUser = Record<string, SeriesPoint[]>;
@@ -43,7 +45,7 @@ export default function LeaderboardWithChart({
   const allEvents = cumulativeData.map((d) => d.event as number);
   const maxEvent = allEvents.length ? Math.max(...allEvents) : 1;
   const [selectedWeek, setSelectedWeek] = React.useState<number>(maxEvent);
-  const [tab, setTab] = React.useState<"cumulative" | "diff" | "avg" | "ovr rank" | "lg rank">("cumulative");
+  const [tab, setTab] = React.useState<"cumulative" | "diff" | "avg" | "ovr rank" | "lg rank" | "wins">("cumulative");
 
   const getPointsAt = (name: string, gw: number) => {
     const arr = seriesByUser[name] || [];
@@ -78,7 +80,7 @@ export default function LeaderboardWithChart({
     });
   }, [seriesKeys, selectedWeek, seriesByUser]);
 
-  const TabButton = ({ id, label }: { id: "cumulative" | "diff" | "avg" | "ovr rank" | "lg rank"; label: string }) => {
+  const TabButton = ({ id, label }: { id: "cumulative" | "diff" | "avg" | "ovr rank" | "lg rank" | "wins"; label: string }) => {
     const active = tab === id;
     return (
       <button
@@ -135,6 +137,7 @@ export default function LeaderboardWithChart({
           <TabButton id="avg" label="Total Average % Diff" />
           <TabButton id="ovr rank" label="World Rank" />
           <TabButton id="lg rank" label="League Rank" />
+          <TabButton id="wins" label="Most Wins" />
         </div>
 
         {tab === "cumulative" && (
@@ -185,6 +188,15 @@ export default function LeaderboardWithChart({
             onWeekChange={setSelectedWeek}
             chipsByUser={chipsByUser}
             chipsMetaByUser={chipsMetaByUser}
+          />
+        )}
+         {tab === "wins" && (
+          <FirstPlaceWinsChart
+            seriesByUser={seriesByUser}
+            seriesKeys={seriesKeys}
+            codesByUser={codesByUser}
+            // use your existing colorFor(nameOrCode).hex for rock-steady colors
+            colorForKey={(key) => (colorFor ? colorFor(key) : { hex: "#6EA8FE" })}
           />
         )}
       </div>

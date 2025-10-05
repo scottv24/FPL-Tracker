@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import ChipAwareTooltip from "./ChartTooltip";
 import { palette } from "./colors";
+import { colorFor } from "../lib/theme";
 
 type SeriesByUser = Record<string, { event: number; total_points: number }[]>;
 
@@ -118,7 +119,7 @@ export default function DiffVsLeaderChart({
               key={name}
               type="monotone"
               dataKey={name}
-              stroke={palette[idx % palette.length]}
+              stroke={colorFor(name.toLowerCase()).hex}
               strokeWidth={2}
               dot={false}
               isAnimationActive={true}   
