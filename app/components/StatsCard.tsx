@@ -1,6 +1,8 @@
 // app/components/StatsCard.tsx
 "use client";
 import React from "react";
+import Link from "next/link";
+import { colorFor } from "../lib/theme";
 
 export type StatItem = { name: string; code: string; event: number; value: number };
 
@@ -20,13 +22,13 @@ export default function StatsCard({
         League Records
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-        <Panel title="Best Week">
+        <Panel title="Best Week" href="/records/best-week">
           <ThreeRows rows={safe(bestWeeks)} unit="pts" />
         </Panel>
-        <Panel title="Biggest Stinker">
+        <Panel title="Biggest Stinker" href="/records/biggest-stinker">
           <ThreeRows rows={safe(worstWeeks)} unit="pts" />
         </Panel>
-        <Panel title="Most Points on Bench ( % of GW )">
+        <Panel title="Most Points on Bench ( % of GW )" href="/records/bench">
           <ThreeRows rows={safe(topBench)} unit="%" />
         </Panel>
       </div>
@@ -34,10 +36,24 @@ export default function StatsCard({
   );
 }
 
-function Panel({ title, children }: React.PropsWithChildren<{ title: string }>) {
+function Panel({
+  title,
+  href,
+  children,
+}: React.PropsWithChildren<{ title: string; href?: string }>) {
   return (
     <div className="bg-sky-950 rounded-lg shadow-lg col-span-1 p-3">
-      <h3 className="font-bold">{title}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-bold">{title}</h3>
+        {href ? (
+          <Link
+            href={href}
+            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
+          >
+            View all
+          </Link>
+        ) : null}
+      </div>
       <div className="grid grid-cols-1 gap-3 pt-3">{children}</div>
     </div>
   );
@@ -50,7 +66,9 @@ function ThreeRows({ rows, unit }: { rows: StatItem[]; unit: "pts" | "%" }) {
         <div
           key={`${r.code}-${r.event}-${i}`}
           className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-2 py-2"
-          onClick={()=>(window.location.href = `https://fantasy.premierleague.com/entry/${r.code}/event/${r.event}`)}
+          onClick={() =>
+            (window.location.href = `https://fantasy.premierleague.com/entry/${r.code}/event/${r.event}`)
+          }
         >
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold text-slate-100">
@@ -68,6 +86,7 @@ function ThreeRows({ rows, unit }: { rows: StatItem[]; unit: "pts" | "%" }) {
     </div>
   );
 }
+
 
 function MedalChip({
   label = "pts",

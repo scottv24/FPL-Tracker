@@ -52,6 +52,11 @@ export interface FplPayload {
   bestWeeksTop3: { name: string; code: string; event: number; value: number }[];
   worstWeeksBottom3: { name: string; code: string; event: number; value: number }[];
   topBenchTop3: { name: string; code: string; event: number; value: number }[]; // value is PERCENT
+
+  // Full tables for "View all" pages
+  bestWeeksTop20: { name: string; code: string; event: number; value: number }[];
+  worstWeeksBottom20: { name: string; code: string; event: number; value: number }[];
+  topBenchTop20: { name: string; code: string; event: number; value: number }[]; // value is PERCENT
 }
 
 // -------------------- shared fetch bits --------------------
@@ -307,7 +312,7 @@ type Fixture = { finished: boolean };
 /**
  * Returns true if the latest event has any fixture not finished.
  * If fetching fails for any reason, returns false (i.e., do not exclude).
- */
+ * */
 async function latestEventHasUnfinishedFixture(latestEvent: number): Promise<boolean> {
   if (!Number.isFinite(latestEvent) || latestEvent <= 0) return false;
   try {
@@ -396,16 +401,22 @@ export async function buildFplPayload(): Promise<FplPayload> {
   const excludeLatestFromWorst = await latestEventHasUnfinishedFixture(latestEvent);
 
   // best: unaffected
-  const bestWeeksTop3 = [...allWeeks].sort((a, b) => b.value - a.value).slice(0, 3);
+  const bestSorted = [...allWeeks].sort((a, b) => b.value - a.value);
+  const bestWeeksTop3 = bestSorted.slice(0, 3);
+  const bestWeeksTop20 = bestSorted.slice(0, 20);
 
   // worst: exclude latest event iff any fixture for that event is unfinished
   const worstCandidatePool = excludeLatestFromWorst
     ? allWeeks.filter(w => w.event !== latestEvent)
     : allWeeks;
-  const worstWeeksBottom3 = [...worstCandidatePool].sort((a, b) => a.value - b.value).slice(0, 3);
+  const worstSorted = [...worstCandidatePool].sort((a, b) => a.value - b.value);
+  const worstWeeksBottom3 = worstSorted.slice(0, 3);
+  const worstWeeksBottom20 = worstSorted.slice(0, 20);
 
   // bench %: rank by percentage desc
-  const topBenchTop3 = [...allBenchPct].sort((a, b) => b.value - a.value).slice(0, 3);
+  const benchSorted = [...allBenchPct].sort((a, b) => b.value - a.value);
+  const topBenchTop3 = benchSorted.slice(0, 3);
+  const topBenchTop20 = benchSorted.slice(0, 20);
 
   // ----- build chart series -----
   const cumulativeData  = mergeByEvent(seriesMap);
@@ -433,5 +444,9 @@ export async function buildFplPayload(): Promise<FplPayload> {
     bestWeeksTop3,
     worstWeeksBottom3,
     topBenchTop3, // percentage values
+
+    bestWeeksTop20,
+    worstWeeksBottom20,
+    topBenchTop20,
   };
 }
